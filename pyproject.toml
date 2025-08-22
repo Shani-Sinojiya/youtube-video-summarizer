@@ -1,0 +1,10 @@
+[project]
+dependencies = [
+  "pytube>=15.0.0",
+  "youtube-transcript-api>=1.2.2",
+]
+description = "YouTube video summarizer"
+name = "yt-summerizer"
+readme = "README.md"
+requires-python = ">=3.12"
+version = "0.1.0"
