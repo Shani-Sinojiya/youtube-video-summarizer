@@ -1,6 +1,7 @@
 [project]
 dependencies = [
   "pytube>=15.0.0",
+  "streamlit>=1.48.1",
   "youtube-transcript-api>=1.2.2",
 ]
 description = "YouTube video summarizer"
