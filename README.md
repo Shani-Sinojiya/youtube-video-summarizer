@@ -1,56 +1,48 @@
-# 📺 YouTube Video Summarizer
+# 🤖 YouTube Video Q&A Assistant
 
-A powerful web application built with Streamlit that extracts comprehensive information and transcripts from YouTube videos. This tool allows you to analyze YouTube videos by extracting metadata, thumbnails, and full transcripts in multiple languages.
+A powerful Streamlit-based web application that transforms YouTube videos into interactive Q&A sessions using AI. Extract transcripts, analyze content, and chat with your videos using Google's Gemini AI.
 
-![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.48.1+-red.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Python](https://img.shields.io/badge/python-v3.12+-blue.svg)
+![Streamlit](https://img.shields.io/badge/streamlit-v1.48+-red.svg)
 
-## ✨ Features
+## 🌟 Features
 
-### 🔍 Video Information Extraction
+### 🎬 Video Processing
 
-- **Comprehensive Metadata**: Extract title, channel, duration, views, upload date
-- **Thumbnail Display**: High-quality video thumbnails
-- **Description Access**: Full video descriptions with expandable view
-- **Multiple URL Formats**: Support for various YouTube URL formats
+- **Multi-format URL Support**: Works with all YouTube URL formats (youtube.com, youtu.be, shorts, embed)
+- **Comprehensive Video Info**: Extract title, duration, views, uploader, and metadata
+- **Multi-language Transcripts**: Support for auto-generated and manual transcripts
+- **Smart Parsing**: Robust URL validation and video ID extraction
 
-### 📝 Transcript Extraction
+### 🤖 AI-Powered Analysis
 
-- **Multi-language Support**: Extract transcripts in 10+ languages (English, Spanish, French, German, Italian, Portuguese, Russian, Japanese, Korean, Chinese)
-- **Multiple View Formats**:
-  - Readable continuous text
-  - Timestamped table format
-  - Raw JSON data
-- **Download Options**: Export transcripts as TXT or JSON files
-- **Language Detection**: Automatic detection of available transcript languages
+- **Interactive Q&A**: Ask questions about video content and get AI-powered answers
+- **Intelligent Summarization**: Generate comprehensive video summaries
+- **Context-Aware Responses**: AI understands video context for accurate answers
+- **Chat History**: Keep track of your conversation with the video
 
-### 🎨 User Interface
+### 🎨 Modern UI/UX
 
-- **Modern Design**: Clean, responsive Streamlit interface
-- **Real-time Processing**: Live feedback during video processing
-- **Error Handling**: Comprehensive error messages and validation
-- **Customizable Options**: Toggle raw data view and download features
+- **Chat Interface**: WhatsApp-style conversation bubbles
+- **Dark/Light Theme**: Automatic theme detection with manual override
+- **Responsive Design**: Works perfectly on desktop and mobile
+- **Real-time Processing**: Live updates without page refresh
 
-## 🚀 Supported URL Formats
+### ⚡ Quick Actions
 
-The application supports all major YouTube URL formats:
+- **Instant Questions**: Pre-built quick questions for immediate insights
+- **Export Options**: Download transcripts and chat history
+- **Full Video Analysis**: One-click comprehensive video breakdown
+- **Settings Panel**: Customizable chat experience
 
-- `https://www.youtube.com/watch?v=VIDEO_ID`
-- `https://youtu.be/VIDEO_ID`
-- `https://youtube.com/embed/VIDEO_ID`
-- `https://youtube.com/v/VIDEO_ID`
-- `https://youtube.com/shorts/VIDEO_ID`
-- URLs with additional parameters (timestamps, playlists, etc.)
-
-## 🛠️ Installation
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.12 or higher
-- uv package manager (recommended) or pip
+- Python 3.12+
+- Google API Key for Gemini AI ([Get yours here](https://aistudio.google.com/app/apikey))
 
-### Quick Start
+### Installation
 
 1. **Clone the repository**
 
@@ -59,187 +51,255 @@ The application supports all major YouTube URL formats:
    cd youtube-video-summarizer
    ```
 
-2. **Install dependencies**
-
-   Using uv (recommended):
+2. **Install dependencies using uv (recommended)**
 
    ```bash
+   # Install uv if you don't have it
+   pip install uv
+
+   # Install project dependencies
    uv sync
    ```
 
-   Using pip:
+   Or use pip:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Run the application**
+3. **Set up environment variables**
 
    ```bash
+   # Create .env file
+   echo "GOOGLE_API_KEY=your_google_api_key_here" > .env
+   ```
+
+4. **Run the application**
+
+   ```bash
+   # Using uv
+   uv run streamlit run main.py
+
+   # Or using streamlit directly
    streamlit run main.py
    ```
 
-4. **Access the application**
-   Open your browser and navigate to `http://localhost:8501`
+5. **Open your browser**
+   - Navigate to `http://localhost:8501`
+   - Paste a YouTube URL and start chatting!
 
-## 📦 Dependencies
+## 📖 Usage Guide
 
-- **streamlit** (≥1.48.1) - Web application framework
-- **pytube** (≥15.0.0) - YouTube video information extraction
-- **youtube-transcript-api** (≥1.2.2) - Transcript extraction
-- **pandas** - Data manipulation and analysis
-- **yt-dlp** - Enhanced YouTube video information extraction
+### Basic Workflow
 
-## 🔧 Project Structure
+1. **Enter YouTube URL**: Paste any YouTube video URL in the input field
+2. **Process Video**: Click "Process" to extract transcript and metadata
+3. **Ask Questions**: Use the chat interface to ask questions about the video
+4. **Get AI Answers**: Receive intelligent, context-aware responses
+
+### Advanced Features
+
+#### Quick Questions
+
+Use pre-built questions for instant insights:
+
+- "What is this video about?"
+- "Summarize the main points"
+- "What are the key takeaways?"
+- "Who is the target audience?"
+
+#### Chat Settings
+
+Customize your experience:
+
+- **Theme Selection**: Auto, Light, or Dark mode
+- **Chat History**: Set maximum conversation length
+- **Timestamps**: Toggle timestamp display
+- **Auto-scroll**: Keep latest messages in view
+
+#### Export & Analysis
+
+- **Export Chat**: Download your Q&A session
+- **Full Analysis**: Generate comprehensive video breakdown
+- **Clear History**: Start fresh conversations
+
+## 🛠️ Configuration
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+# Required
+GOOGLE_API_KEY=your_google_api_key_here
+
+# Optional
+DEFAULT_MODEL=gemini-1.5-flash
+```
+
+### Supported Models
+
+- `gemini-1.5-flash` (default, fast responses)
+- `gemini-1.5-pro` (more detailed analysis)
+- `gemini-pro` (legacy support)
+
+## 📁 Project Structure
 
 ```
 YT-summerizer/
 ├── main.py                          # Main Streamlit application
-├── pyproject.toml                   # Project configuration and dependencies
-├── uv.lock                          # Dependency lock file
-├── README.md                        # Project documentation
-├── testing.ipynb                    # Development and testing notebook
-└── utils/                           # Utility modules
-    ├── youtube_url_parser.py        # URL parsing and video ID extraction
-    ├── youtube_info_extractor.py    # Video metadata extraction
-    └── youtube_transcribe.py        # Transcript extraction and processing
+├── pyproject.toml                   # Project configuration
+├── README.md                        # This file
+├── ARCHITECTURE.md                  # Detailed architecture guide
+├── .env                            # Environment variables
+├── utils/                          # Core utilities
+│   ├── youtube_url_parser.py       # URL parsing and validation
+│   ├── youtube_info_extractor.py   # Video metadata extraction
+│   ├── youtube_transcribe.py       # Transcript processing
+│   └── youtube_analyzer.py         # AI analysis engine
+└── __pycache__/                    # Python cache
 ```
 
-## 💻 Usage
+## 🔧 API Reference
 
-### Basic Usage
+### Core Classes
 
-1. **Launch the application**
+#### `YouTubeParser`
 
-   ```bash
-   streamlit run main.py
-   ```
+```python
+from utils.youtube_url_parser import YouTubeParser
 
-2. **Enter a YouTube URL**
-
-   - Paste any valid YouTube URL in the input field
-   - Select your preferred transcript language from the sidebar
-   - Click "🔍 Extract Information"
-
-3. **View Results**
-   - Browse video information (title, channel, duration, views, etc.)
-   - Read transcripts in multiple formats
-   - Download transcripts as needed
-
-### Advanced Options
-
-- **Language Selection**: Choose from 10+ supported languages for transcript extraction
-- **Raw Data View**: Enable to see complete JSON metadata
-- **Download Options**: Export transcripts in TXT or JSON format
-- **Error Handling**: Comprehensive error messages for troubleshooting
-
-### Example URLs for Testing
-
-```
-https://www.youtube.com/watch?v=dQw4w9WgXcQ
-https://youtu.be/dQw4w9WgXcQ
-https://youtube.com/shorts/abc123def456
+parser = YouTubeParser("https://youtube.com/watch?v=VIDEO_ID")
+video_id = parser.get_video_id()
 ```
 
-## 🔨 Development
+#### `YouTubeInfoExtractor`
 
-### Setting up Development Environment
+```python
+from utils.youtube_info_extractor import YouTubeInfoExtractor
 
-1. **Clone and setup**
-
-   ```bash
-   git clone https://github.com/Shani-Sinojiya/youtube-video-summarizer.git
-   cd youtube-video-summarizer
-   uv sync
-   ```
-
-2. **Run in development mode**
-   ```bash
-   streamlit run main.py --server.runOnSave true
-   ```
-
-### Testing
-
-Use the included Jupyter notebook for testing and development:
-
-```bash
-jupyter notebook testing.ipynb
+extractor = YouTubeInfoExtractor()
+info = extractor.get_info("https://youtube.com/watch?v=VIDEO_ID")
 ```
 
-### Code Structure
+#### `YouTubeTranscriber`
 
-- **`main.py`**: Streamlit web application with UI components
-- **`utils/youtube_url_parser.py`**: Handles URL parsing and video ID extraction
-- **`utils/youtube_info_extractor.py`**: Extracts video metadata using yt-dlp
-- **`utils/youtube_transcribe.py`**: Manages transcript extraction and language handling
+```python
+from utils.youtube_transcribe import YouTubeTranscriber
+
+transcriber = YouTubeTranscriber("VIDEO_ID")
+transcripts = transcriber.get_all_transcripts()
+```
+
+#### `YouTubeAnalyzer`
+
+```python
+from utils.youtube_analyzer import YouTubeAnalyzer
+
+analyzer = YouTubeAnalyzer("your_api_key")
+answer = analyzer.ask_question(transcript, "What is this about?")
+```
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions! Here's how you can help:
 
-## 📝 License
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes**: Follow the existing code style
+4. **Add tests**: Ensure your changes work correctly
+5. **Commit changes**: `git commit -m 'Add amazing feature'`
+6. **Push to branch**: `git push origin feature/amazing-feature`
+7. **Open a Pull Request**: Describe your changes
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Development Setup
 
-## 🐛 Known Issues & Limitations
+```bash
+# Clone your fork
+git clone https://github.com/YOUR_USERNAME/youtube-video-summarizer.git
 
-- Some videos may not have transcripts available in all languages
-- Private or age-restricted videos cannot be processed
-- Very long videos may take longer to process
-- Transcript accuracy depends on YouTube's automatic captioning quality
+# Install development dependencies
+uv sync --dev
 
-## 🆘 Troubleshooting
+# Run tests
+pytest
+
+# Format code
+black .
+isort .
+```
+
+## 📋 Requirements
+
+### Core Dependencies
+
+- `streamlit>=1.48.1` - Web framework
+- `youtube-transcript-api>=1.2.2` - Transcript extraction
+- `google-generativeai>=0.5.4` - AI analysis
+- `yt-dlp>=2025.8.27` - Video metadata
+- `python-dotenv>=1.0.0` - Environment management
+
+### Development Dependencies
+
+- `pytest` - Testing framework
+- `black` - Code formatting
+- `isort` - Import sorting
+- `flake8` - Linting
+
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **"Invalid YouTube URL" Error**
+**API Key Error**
 
-   - Ensure the URL is a valid YouTube link
-   - Check if the video is public and accessible
+```
+❌ Please enter your Google API Key in the sidebar
+```
 
-2. **"No transcript available" Warning**
+- Solution: Set `GOOGLE_API_KEY` in your `.env` file
 
-   - Try a different language option
-   - Some videos may not have transcripts
+**No Transcripts Available**
 
-3. **Installation Issues**
-   - Ensure Python 3.12+ is installed
-   - Try using `uv sync` instead of pip install
+```
+❌ No transcripts available for this video
+```
+
+- Solution: Try a different video or check if captions are enabled
+
+**Invalid YouTube URL**
+
+```
+❌ Invalid YouTube URL
+```
+
+- Solution: Ensure you're using a valid YouTube video URL
 
 ### Getting Help
 
-- Create an issue on GitHub for bugs or feature requests
-- Check existing issues for solutions to common problems
+1. **Check the [Issues](https://github.com/Shani-Sinojiya/youtube-video-summarizer/issues)** page
+2. **Read the [Architecture Guide](ARCHITECTURE.md)** for technical details
+3. **Create a new issue** with detailed error information
 
-## 🔮 Future Enhancements
+## 📄 License
 
-- [ ] AI-powered video summarization
-- [ ] Batch processing for multiple videos
-- [ ] Export to more formats (PDF, DOCX)
-- [ ] Transcript search and filtering
-- [ ] Video chapter detection
-- [ ] Integration with note-taking applications
-
-## 👨‍💻 Author
-
-**Shani Sinojiya**
-
-- GitHub: [@Shani-Sinojiya](https://github.com/Shani-Sinojiya)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- [Streamlit](https://streamlit.io/) for the amazing web framework
-- [pytube](https://github.com/pytube/pytube) for YouTube API integration
-- [youtube-transcript-api](https://github.com/jdepoix/youtube-transcript-api) for transcript extraction
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) for enhanced video information extraction
+- **Google AI** for the Gemini API
+- **Streamlit** for the amazing web framework
+- **YouTube Transcript API** for transcript access
+- **yt-dlp** for reliable video data extraction
+
+## 🔗 Links
+
+- **Live Demo**: [Coming Soon]
+- **Documentation**: [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Issues**: [GitHub Issues](https://github.com/Shani-Sinojiya/youtube-video-summarizer/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Shani-Sinojiya/youtube-video-summarizer/discussions)
 
 ---
 
-<div align="center">
-  <p>Built with ❤️ using Streamlit</p>
-  <p>⭐ Star this repository if you find it helpful!</p>
-</div>
+**Made with ❤️ by [Shani Sinojiya](https://github.com/Shani-Sinojiya)**
+
+_Transform any YouTube video into an interactive learning experience!_
