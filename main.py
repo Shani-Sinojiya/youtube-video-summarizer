@@ -4,6 +4,7 @@ from datetime import datetime
 from utils.youtube_url_parser import YouTubeParser
 from utils.youtube_info_extractor import YouTubeInfoExtractor
 from utils.youtube_transcribe import YouTubeTranscriber
+from utils.youtube_analyzer import YouTubeAnalyzer
 import json
 
 # Page configuration
@@ -106,7 +107,10 @@ def main():
         st.markdown(
             "Enter a YouTube URL to extract video information and transcript.")
 
-        # Note: Language selection removed - will automatically detect available languages
+        # API key input
+        st.subheader("🔑 API Key")
+        api_key = st.text_input("Enter your Google API Key:", type="password")
+        st.markdown("[Get your key from Google AI Studio](https://aistudio.google.com/app/apikey)")
 
         # Additional options
         st.subheader("Options")
@@ -140,6 +144,10 @@ def main():
 
     # Process the URL when button is clicked
     if process_button and url_input:
+        if not api_key:
+            st.markdown('<div class="error-message">❌ Please enter your Google API Key in the sidebar to use the AI features.</div>', unsafe_allow_html=True)
+            st.stop()
+
         with st.spinner("🔄 Processing video..."):
             try:
                 # Parse URL to get video ID
@@ -183,7 +191,7 @@ def main():
                     # Display thumbnail if available
                     if video_info.get('thumbnail'):
                         st.subheader("🖼️ Thumbnail")
-                        st.image(video_info['thumbnail'],  # type: ignore
+                        st.image(video_info['thumbnail'],
                                  use_container_width=True)
 
                 # Description
@@ -191,7 +199,8 @@ def main():
                     st.subheader("📄 Description")
                     with st.expander("View full description"):
                         st.write(video_info['description'])
-
+                
+                transcript_text = ""
                 # Extract transcript
                 st.header("📝 Video Transcript")
 
@@ -246,7 +255,7 @@ def main():
                                     st.caption("✍️ Manual transcript")
 
                                 # Process transcript data for this language
-                                transcript_text = ""
+                                
                                 transcript_df_data = []
 
                                 for entry in transcript_data:
@@ -328,6 +337,20 @@ def main():
 
                 except Exception as e:
                     st.error(f"❌ Error extracting transcript: {str(e)}")
+
+                # AI-powered Q&A section
+                if transcript_text:
+                    st.header("🤖 Video Q&A")
+                    st.markdown("Ask a question about the video and get an answer from our AI assistant.")
+
+                    question = st.text_input("Your question:")
+                    ask_question_button = st.button("💬 Ask Question")
+
+                    if ask_question_button and question:
+                        with st.spinner("🧠 Thinking..."):
+                            analyzer = YouTubeAnalyzer(api_key)
+                            answer = analyzer.ask_question(transcript_text, question)
+                            st.markdown(f'<div class="video-info-card"><h4>Answer:</h4><p>{answer}</p></div>', unsafe_allow_html=True)
 
                 # Raw JSON data (optional)
                 if show_raw_json:
