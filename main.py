@@ -106,14 +106,7 @@ def main():
         st.markdown(
             "Enter a YouTube URL to extract video information and transcript.")
 
-        # Language selection for transcript
-        st.subheader("Transcript Language")
-        language_code = st.selectbox(
-            "Select language for transcript:",
-            ["en", "es", "fr", "de", "it", "pt", "ru", "ja", "ko", "zh"],
-            index=0,
-            help="Choose the language for video transcript extraction"
-        )
+        # Note: Language selection removed - will automatically detect available languages
 
         # Additional options
         st.subheader("Options")
@@ -190,7 +183,7 @@ def main():
                     # Display thumbnail if available
                     if video_info.get('thumbnail'):
                         st.subheader("🖼️ Thumbnail")
-                        st.image(video_info['thumbnail'], # type: ignore
+                        st.image(video_info['thumbnail'],  # type: ignore
                                  use_container_width=True)
 
                 # Description
@@ -204,82 +197,134 @@ def main():
 
                 try:
                     transcriber = YouTubeTranscriber(video_id)
-                    transcriber.set_transcribe_language(language_code)
 
-                    # Get available languages
-                    available_languages = transcriber.get_list()
-                    lang_codes = [
-                        transcript.language_code for transcript in available_languages]
+                    # Get all available transcripts at once
+                    all_transcripts = transcriber.get_all_transcripts()
 
-                    st.info(
-                        f"Available transcript languages: {', '.join(lang_codes)}")
-
-                    transcript_data = transcriber.transcribe()
-
-                    if transcript_data:
-                        st.success(
-                            f"✅ Transcript extracted successfully in '{language_code}' language!")
-
-                        # Process transcript data
-                        transcript_text = ""
-                        transcript_df_data = []
-
-                        for entry in transcript_data:
-                            start_time = entry.start if hasattr(
-                                entry, 'start') else entry.get('start', 0) # type: ignore
-                            duration = entry.duration if hasattr(
-                                entry, 'duration') else entry.get('duration', 0) # type: ignore
-                            text = entry.text if hasattr(
-                                entry, 'text') else entry.get('text', '') # type: ignore
-
-                            transcript_text += f"{text} "
-                            transcript_df_data.append({
-                                'Start Time': f"{int(start_time//60):02d}:{int(start_time % 60):02d}",
-                                'Duration': f"{duration:.1f}s",
-                                'Text': text
-                            })
-
-                        # Display transcript in different formats
-                        tab1, tab2, tab3 = st.tabs(
-                            ["📖 Readable Text", "📊 Timestamped Table", "💾 Download"])
-
-                        with tab1:
-                            st.markdown(
-                                '<div class="transcript-container">', unsafe_allow_html=True)
-                            st.write(transcript_text.strip())
-                            st.markdown('</div>', unsafe_allow_html=True)
-
-                        with tab2:
-                            df = pd.DataFrame(transcript_df_data)
-                            st.dataframe(
-                                df, use_container_width=True, height=400)
-
-                        with tab3:
-                            if download_transcript:
-                                # Prepare download data
-                                transcript_json = json.dumps(
-                                    transcript_data.to_raw_data(), indent=2)
-
-                                col_download1, col_download2 = st.columns(2)
-
-                                with col_download1:
-                                    st.download_button(
-                                        label="📥 Download as Text",
-                                        data=transcript_text.strip(),
-                                        file_name=f"{video_id}_transcript.txt",
-                                        mime="text/plain"
-                                    )
-
-                                with col_download2:
-                                    st.download_button(
-                                        label="📥 Download as JSON",
-                                        data=transcript_json,
-                                        file_name=f"{video_id}_transcript.json",
-                                        mime="application/json"
-                                    )
-                    else:
+                    if not all_transcripts:
                         st.warning(
-                            f"⚠️ No transcript available in '{language_code}' language.")
+                            "⚠️ No transcripts available for this video.")
+                    else:
+                        st.success(
+                            f"✅ Transcripts extracted successfully! Available in {len(all_transcripts)} language(s)")
+
+                        # Display available languages info
+                        lang_info = []
+                        for lang_code, transcript_info in all_transcripts.items():
+                            lang_name = transcript_info.get(
+                                'language', lang_code)
+                            is_generated = transcript_info.get(
+                                'is_generated', False)
+                            status = " (Auto-generated)" if is_generated else " (Manual)"
+                            lang_info.append(
+                                f"{lang_name} ({lang_code}){status}")
+
+                        st.info(f"Available languages: {', '.join(lang_info)}")
+
+                        # Create tabs for each available language
+                        tab_labels = []
+                        for lang_code, transcript_info in all_transcripts.items():
+                            lang_name = transcript_info.get(
+                                'language', lang_code)
+                            tab_labels.append(
+                                f"{lang_name.title()} ({lang_code})")
+
+                        language_tabs = st.tabs(tab_labels)
+
+                        for i, (lang_code, transcript_info) in enumerate(all_transcripts.items()):
+                            with language_tabs[i]:
+                                transcript_data = transcript_info['data']
+                                lang_name = transcript_info.get(
+                                    'language', lang_code)
+                                is_generated = transcript_info.get(
+                                    'is_generated', False)
+
+                                # Show transcript type
+                                if is_generated:
+                                    st.caption("🤖 Auto-generated transcript")
+                                else:
+                                    st.caption("✍️ Manual transcript")
+
+                                # Process transcript data for this language
+                                transcript_text = ""
+                                transcript_df_data = []
+
+                                for entry in transcript_data:
+                                    # Handle both dictionary and object formats
+                                    if isinstance(entry, dict):
+                                        start_time = entry.get('start', 0)
+                                        duration = entry.get('duration', 0)
+                                        text = entry.get('text', '')
+                                    else:
+                                        # If it's an object, use attribute access
+                                        start_time = getattr(entry, 'start', 0)
+                                        duration = getattr(
+                                            entry, 'duration', 0)
+                                        text = getattr(entry, 'text', '')
+
+                                    transcript_text += f"{text} "
+                                    transcript_df_data.append({
+                                        'Start Time': f"{int(start_time//60):02d}:{int(start_time % 60):02d}",
+                                        'Duration': f"{duration:.1f}s",
+                                        'Text': text
+                                    })
+
+                                # Display transcript in different formats for this language
+                                inner_tab1, inner_tab2, inner_tab3 = st.tabs(
+                                    ["📖 Readable Text", "📊 Timestamped Table", "💾 Download"])
+
+                                with inner_tab1:
+                                    st.markdown(
+                                        '<div class="transcript-container">', unsafe_allow_html=True)
+                                    st.write(transcript_text.strip())
+                                    st.markdown(
+                                        '</div>', unsafe_allow_html=True)
+
+                                with inner_tab2:
+                                    df = pd.DataFrame(transcript_df_data)
+                                    st.dataframe(
+                                        df, use_container_width=True, height=400)
+
+                                with inner_tab3:
+                                    if download_transcript:
+                                        # Prepare download data for this language
+                                        # Convert transcript objects to serializable dictionaries
+                                        serializable_transcript = []
+                                        for entry in transcript_data:
+                                            if isinstance(entry, dict):
+                                                serializable_transcript.append(
+                                                    entry)
+                                            else:
+                                                # Convert FetchedTranscriptSnippet to dictionary
+                                                entry_dict = {
+                                                    'start': getattr(entry, 'start', 0),
+                                                    'duration': getattr(entry, 'duration', 0),
+                                                    'text': getattr(entry, 'text', '')
+                                                }
+                                                serializable_transcript.append(
+                                                    entry_dict)
+
+                                        transcript_json = json.dumps(
+                                            serializable_transcript, indent=2)
+
+                                        col_download1, col_download2 = st.columns(
+                                            2)
+
+                                        with col_download1:
+                                            st.download_button(
+                                                label=f"📥 Download {lang_code.upper()} as Text",
+                                                data=transcript_text.strip(),
+                                                file_name=f"{video_id}_transcript_{lang_code}.txt",
+                                                mime="text/plain"
+                                            )
+
+                                        with col_download2:
+                                            st.download_button(
+                                                label=f"📥 Download {lang_code.upper()} as JSON",
+                                                data=transcript_json,
+                                                file_name=f"{video_id}_transcript_{lang_code}.json",
+                                                mime="application/json"
+                                            )
 
                 except Exception as e:
                     st.error(f"❌ Error extracting transcript: {str(e)}")

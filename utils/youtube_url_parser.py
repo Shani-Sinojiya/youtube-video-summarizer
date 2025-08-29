@@ -46,5 +46,5 @@ class YouTubeParser:
 
         return None
 
-    def get_video_id(self):
-        return self.video_id
+    def get_video_id(self) -> str:
+        return self.video_id or ""
