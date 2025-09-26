@@ -39,8 +39,6 @@ const VideoListProvider = ({ children }: PropsWithChildren) => {
     fetcher: (url: string) => fetch(url).then((res) => res.json()),
   }) as { data: VideoInfo[]; error: any; isLoading: boolean };
 
-  console.log(data, error, isLoading);
-
   return (
     <VideoListContext.Provider
       value={{

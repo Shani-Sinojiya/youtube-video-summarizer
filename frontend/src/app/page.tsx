@@ -1,5 +1,3 @@
-import { LandingPage } from "@/components/landing/landing-page";
-import { type Metadata } from "next";
 import { redirect } from "next/navigation";
 
 // export const metadata: Metadata = {
