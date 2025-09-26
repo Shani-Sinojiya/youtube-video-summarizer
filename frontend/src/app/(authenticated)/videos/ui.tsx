@@ -29,15 +29,15 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onChat }) => {
   const getStatusClass = (status: Video["status"]) => {
     switch (status) {
       case "pending":
-        return "bg-neutral-600 text-neutral-200";
+        return "bg-neutral-600 dark:bg-neutral-600 text-neutral-200 dark:text-neutral-200";
       case "processing":
-        return "bg-yellow-600 text-neutral-100";
+        return "bg-yellow-600 dark:bg-yellow-600 text-neutral-100 dark:text-neutral-100";
       case "completed":
-        return "bg-green-600 text-neutral-100";
+        return "bg-green-600 dark:bg-green-600 text-neutral-100 dark:text-neutral-100";
       case "failed":
-        return "bg-red-600 text-neutral-100";
+        return "bg-red-600 dark:bg-red-600 text-neutral-100 dark:text-neutral-100";
       default:
-        return "bg-neutral-600 text-neutral-200";
+        return "bg-neutral-600 dark:bg-neutral-600 text-neutral-200 dark:text-neutral-200";
     }
   };
 
@@ -46,7 +46,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onChat }) => {
       {videos.map((video) => (
         <div
           key={video.youtube_id}
-          className="group flex flex-col bg-neutral-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-transform duration-300 hover:scale-[1.02]"
+          className="group flex flex-col bg-white dark:bg-neutral-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-transform duration-300 hover:scale-[1.02] border border-neutral-200 dark:border-neutral-700"
         >
           {/* Thumbnail */}
           <div className="relative w-full h-48 overflow-hidden">
@@ -66,7 +66,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onChat }) => {
             </div>
 
             {/* Duration Badge */}
-            <div className="absolute bottom-2 right-2 text-xs px-2 py-1 rounded-md bg-neutral-700/70 text-neutral-200">
+            <div className="absolute bottom-2 right-2 text-xs px-2 py-1 rounded-md bg-black/70 dark:bg-neutral-700/70 text-white dark:text-neutral-200">
               {Math.floor(video.duration_seconds / 60)}m{" "}
               {video.duration_seconds % 60}s
             </div>
@@ -75,25 +75,25 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onChat }) => {
           {/* Content */}
           <div className="flex flex-col p-4 gap-2 flex-1">
             <h3
-              className="text-base font-semibold line-clamp-2 text-neutral-100"
+              className="text-base font-semibold line-clamp-2 text-neutral-900 dark:text-neutral-100"
               title={video.title}
             >
               {video.title}
             </h3>
             <p
-              className="text-sm text-neutral-400 line-clamp-3"
+              className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-3"
               title={video.description}
             >
               {video.description}
             </p>
 
-            <div className="flex flex-col gap-1 text-xs text-neutral-400 mt-auto">
+            <div className="flex flex-col gap-1 text-xs text-neutral-500 dark:text-neutral-400 mt-auto">
               <span>Views: {video.view_count.toLocaleString()}</span>
               <Link
                 href={video.channel_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:underline text-neutral-300"
+                className="hover:underline text-neutral-700 dark:text-neutral-300"
               >
                 Uploader: {video.uploader}
               </Link>
