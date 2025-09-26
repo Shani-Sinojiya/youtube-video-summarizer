@@ -1,6 +1,10 @@
 # Acknowledgements
 
-We would like to express our sincere gratitude to all those who contributed to the successful completion of this Software Engineering Project Report on the **YouTube Video Summarizer System**.
+WThis project represents our collective effort to create an innovative solution for multilingual video content summarization and intelligent chat interaction, demonstrating the practical application of software engineering principles in developing AI-powered applications.
+
+---
+
+*September 2025*ld like to express our sincere gratitude to all those who contributed to the successful completion of this Software Engineering Project Report on the **YouTube Video Summarizer System**.
 
 First and foremost, we thank our project supervisor and faculty members for their invaluable guidance, continuous support, and expert advice throughout the development lifecycle of this project. Their insights and feedback were instrumental in shaping the system architecture and ensuring adherence to software engineering best practices.
 
@@ -25,4 +29,4 @@ This project represents our collective effort to create an innovative solution f
 
 ---
 
-_December 2024_
+_September 2025_

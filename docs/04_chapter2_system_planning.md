@@ -4,51 +4,169 @@
 
 ### 2.1.1 Software Development Life Cycle (SDLC) Model
 
-For the YouTube Video Summarizer System, we have adopted the **Agile Development Model** with elements of the **Iterative and Incremental Model**. This hybrid approach was selected based on the following considerations:
+For the YouTube Video Summarizer System, we have adopted the **Agile Development Model** with elements of the **Iterative and Incremental Model**. This hybrid approach was selected based on comprehensive analysis of project requirements, timeline constraints, and technical complexities.
+
+#### SDLC Model Selection Criteria:
+
+**Primary Considerations:**
+
+- Project complexity requiring AI integration and modern web technologies
+- Tight timeline requiring rapid development and deployment (55 days)
+- Need for continuous stakeholder feedback and requirement refinement
+- Integration challenges with multiple third-party services (YouTube API, Google AI)
+- Team expertise in modern development practices and frameworks
+
+**Alternative Models Considered:**
+
+- **Waterfall Model**: Rejected due to inflexibility and sequential constraints
+- **Spiral Model**: Rejected due to time constraints for extensive risk analysis cycles
+- **DevOps Model**: Considered but requires more mature CI/CD infrastructure
+- **RAD (Rapid Application Development)**: Partially adopted for prototyping phases
 
 #### Reasons for Choosing Agile Methodology:
 
-1. **Flexibility**: The project requirements evolved as we gained deeper understanding of AI integration complexities
-2. **User Feedback**: Early prototypes allowed for continuous user feedback and requirement refinement
-3. **Technology Integration**: Complex AI and modern web technologies required iterative testing and validation
-4. **Risk Management**: Incremental development helped identify and mitigate technical risks early
-5. **Team Collaboration**: Enhanced communication between frontend, backend, and AI integration teams
+1. **Adaptive Planning**: The project requirements evolved as we gained deeper understanding of AI integration complexities and user needs
+2. **Continuous Feedback**: Early prototypes allowed for continuous user feedback and requirement refinement throughout development
+3. **Technology Integration**: Complex AI and modern web technologies required iterative testing and validation to ensure compatibility
+4. **Risk Management**: Incremental development helped identify and mitigate technical risks early in the development cycle
+5. **Team Collaboration**: Enhanced communication between frontend, backend, and AI integration teams through daily standups and sprint reviews
+6. **Quality Assurance**: Continuous testing and integration ensured high-quality deliverables at each sprint
+7. **Time Management**: Short sprints (1-2 weeks) enabled effective progress tracking and deadline adherence
+
+#### Agile Methodology Characteristics Applied:
+
+**Sprint Structure:**
+
+- Sprint Duration: 7-14 days depending on complexity
+- Sprint Planning: Detailed task breakdown and estimation
+- Daily Standups: Progress tracking and impediment resolution
+- Sprint Reviews: Stakeholder feedback and demonstration
+- Retrospectives: Process improvement and lesson learned
+
+**Key Agile Practices Implemented:**
+
+- **User Stories**: Requirements defined as user-centric stories with acceptance criteria
+- **Continuous Integration**: Automated testing and code integration
+- **Test-Driven Development**: Unit tests written before implementation
+- **Pair Programming**: Complex AI integration tasks performed collaboratively
+- **Refactoring**: Continuous code improvement and optimization
 
 #### SDLC Phases Implementation:
 
-1. **Planning Phase** (Week 1-2):
+1. **Planning Phase** (August 1-7, 2025):
 
    - Requirements gathering and analysis
    - Technology stack selection
    - System architecture design
    - Project timeline establishment
 
-2. **Design Phase** (Week 3-4):
+2. **Design Phase** (August 8-14, 2025):
 
    - Database schema design
    - API specification development
    - UI/UX wireframe creation
    - Security architecture planning
 
-3. **Implementation Phase** (Week 5-12):
+3. **Implementation Phase** (August 15 - September 15, 2025):
 
    - Sprint 1: User authentication and basic video processing
    - Sprint 2: AI integration and summarization features
    - Sprint 3: Chat system and RAG implementation
    - Sprint 4: Frontend development and UI integration
 
-4. **Testing Phase** (Week 13-14):
+4. **Testing Phase** (September 16-22, 2025):
 
    - Unit testing for individual components
    - Integration testing for API endpoints
    - User acceptance testing
    - Performance and security testing
 
-5. **Deployment Phase** (Week 15-16):
+5. **Deployment Phase** (September 23-25, 2025):
    - Production environment setup
    - System deployment and monitoring
    - Documentation completion
    - User training and support
+
+#### Risk Management in Agile Approach:
+
+**Identified Risks and Mitigation Strategies:**
+
+| Risk Category | Risk Description              | Probability | Impact | Mitigation Strategy                           |
+| ------------- | ----------------------------- | ----------- | ------ | --------------------------------------------- |
+| Technical     | AI API rate limiting          | High        | Medium | Implement caching and request optimization    |
+| Technical     | YouTube API changes           | Medium      | High   | Version pinning and fallback mechanisms       |
+| Schedule      | Tight development timeline    | High        | High   | Parallel development streams and MVP approach |
+| Integration   | Third-party service downtime  | Medium      | Medium | Circuit breaker pattern and retry logic       |
+| Quality       | Insufficient testing time     | Medium      | High   | Automated testing and continuous integration  |
+| Resource      | Team availability constraints | Low         | Medium | Cross-training and documentation              |
+
+**Risk Monitoring:**
+
+- Weekly risk assessment during sprint reviews
+- Contingency planning for critical path activities
+- Early warning indicators and escalation procedures
+
+#### Success Metrics for Agile Implementation:
+
+**Process Metrics:**
+
+- Sprint velocity tracking and consistency
+- Defect detection rate per sprint
+- Code coverage percentage (target: >90%)
+- Sprint goal achievement rate (target: >95%)
+
+**Quality Metrics:**
+
+- User acceptance test pass rate
+- Performance benchmark compliance
+- Security vulnerability assessment results
+- Code review completion rate
+
+**Timeline Metrics:**
+
+- On-time delivery of sprint commitments
+- Scope creep management effectiveness
+- Technical debt accumulation monitoring
+
+#### Agile Tools and Practices:
+
+**Development Tools:**
+
+- **Version Control**: Git with GitHub for collaborative development
+- **Project Management**: GitHub Projects for sprint planning and tracking
+- **Communication**: Daily standups via Microsoft Teams/Slack
+- **Documentation**: Markdown-based documentation in repository
+- **Testing**: Automated testing with pytest (backend) and Jest (frontend)
+
+**Quality Assurance Practices:**
+
+- **Code Reviews**: Mandatory peer reviews for all commits
+- **Continuous Integration**: Automated builds and testing on every commit
+- **Definition of Done**: Clear criteria for story completion
+- **Technical Standards**: Coding standards and architectural guidelines
+- **Performance Monitoring**: Real-time application performance tracking
+
+#### Lessons Learned and Best Practices:
+
+**Successful Practices:**
+
+- Early integration of AI services prevented late-stage issues
+- Parallel development of frontend and backend improved efficiency
+- Regular stakeholder demos maintained alignment with requirements
+- Automated testing reduced manual testing effort by 60%
+
+**Challenges Addressed:**
+
+- AI model response variability required extensive testing scenarios
+- Third-party API dependencies needed robust error handling
+- Compressed timeline required prioritization of core features over nice-to-have functionality
+
+**Recommendations for Future Projects:**
+
+- Allocate 20% buffer time for AI integration complexities
+- Establish AI service monitoring and alerting from day one
+- Implement comprehensive logging for debugging AI-related issues
+- Plan for API rate limiting and cost management strategies
 
 ## 2.2 System Modules
 
@@ -268,81 +386,79 @@ gantt
     title YouTube Video Summarizer - Project Timeline
     dateFormat  YYYY-MM-DD
     section Planning
-    Requirements Analysis     :req, 2024-01-01, 7d
+    Requirements Analysis     :req, 2025-08-01, 7d
     System Design           :design, after req, 7d
     Technology Selection    :tech, after req, 5d
 
     section Backend Development
-    Database Setup          :db, after design, 5d
-    Authentication Module   :auth, after db, 7d
-    Video Processing Module :video, after db, 10d
-    AI Integration         :ai, after video, 8d
-    Chat System           :chat, after ai, 7d
-    API Testing           :test1, after chat, 5d
+    Database Setup          :db, after design, 3d
+    Authentication Module   :auth, after db, 5d
+    Video Processing Module :video, after db, 8d
+    AI Integration         :ai, after video, 6d
+    Chat System           :chat, after ai, 5d
+    API Testing           :test1, after chat, 3d
 
     section Frontend Development
-    UI Framework Setup     :ui, after design, 3d
-    Authentication UI      :uiauth, after ui, 5d
-    Video Processing UI    :uivideo, after uiauth, 7d
-    Chat Interface        :uichat, after uivideo, 8d
-    Integration Testing   :test2, after uichat, 5d
+    UI Framework Setup     :ui, after design, 2d
+    Authentication UI      :uiauth, after ui, 3d
+    Video Processing UI    :uivideo, after uiauth, 5d
+    Chat Interface        :uichat, after uivideo, 6d
+    Integration Testing   :test2, after uichat, 3d
 
     section AI & Vector Store
-    Embedding Setup       :embed, after ai, 5d
-    RAG Implementation    :rag, after embed, 7d
-    Vector Store Optimization :vector, after rag, 5d
+    Embedding Setup       :embed, after ai, 3d
+    RAG Implementation    :rag, after embed, 5d
+    Vector Store Optimization :vector, after rag, 3d
 
     section Testing & Deployment
-    System Testing        :systest, after test1, 7d
-    Performance Testing   :perftest, after systest, 5d
-    Security Testing      :sectest, after systest, 5d
-    Deployment Setup      :deploy, after perftest, 5d
-    Documentation        :doc, after deploy, 7d
-
-    section Milestones
+    System Testing        :systest, after test1, 5d
+    Performance Testing   :perftest, after systest, 3d
+    Security Testing      :sectest, after systest, 3d
+    Deployment Setup      :deploy, after perftest, 3d
+    Documentation        :doc, after deploy, 3d    section Milestones
     MVP Complete         :milestone, m1, after test1, 0d
     Beta Release         :milestone, m2, after test2, 0d
-    Production Ready     :milestone, m3, after deploy, 0d
+    Production Ready     :milestone, m3, 2025-09-25, 0d
 ```
 
 ### 2.6.1 Phase Breakdown
 
-#### Phase 1: Foundation (Weeks 1-4)
+#### Phase 1: Foundation (August 1-7, 2025)
 
 - Project planning and requirements analysis
 - System architecture design
 - Development environment setup
 - Database schema design and implementation
 
-#### Phase 2: Backend Core (Weeks 5-8)
+#### Phase 2: Backend Core (August 8-15, 2025)
 
 - Authentication system implementation
 - Video processing module development
 - AI service integration
 - API endpoint creation and testing
 
-#### Phase 3: Frontend Development (Weeks 6-10)
+#### Phase 3: Frontend Development (August 10-20, 2025)
 
 - User interface design and implementation
 - Authentication flow integration
 - Video processing interface
 - Chat system user interface
 
-#### Phase 4: AI Enhancement (Weeks 9-11)
+#### Phase 4: AI Enhancement (August 16-25, 2025)
 
 - Vector storage optimization
 - RAG system implementation
 - Chat intelligence enhancement
 - Performance optimization
 
-#### Phase 5: Integration & Testing (Weeks 12-15)
+#### Phase 5: Integration & Testing (August 26 - September 15, 2025)
 
 - System integration testing
 - User acceptance testing
 - Performance and security testing
 - Bug fixes and optimization
 
-#### Phase 6: Deployment & Documentation (Weeks 16-17)
+#### Phase 6: Deployment & Documentation (September 16-25, 2025)
 
 - Production environment setup
 - System deployment
