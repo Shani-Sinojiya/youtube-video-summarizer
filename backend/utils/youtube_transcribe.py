@@ -15,7 +15,7 @@ class YouTubeTranscriber:
         """Set Transcribe Language"""
         self.transcribe_language = language
 
-    def transcribe(self) -> FetchedTranscript | None:
+    def transcribe(self) -> list[dict] | None:
         """Get transcription in the specified language"""
         allinfo = self.get_list()
 
@@ -33,7 +33,16 @@ class YouTubeTranscriber:
             transcript = next(
                 (t for t in allinfo if t.language_code == self.transcribe_language), None)
             if transcript:
-                return transcript.fetch(preserve_formatting=True)
+                fetched_transcript = transcript.fetch(preserve_formatting=True)
+                # Convert FetchedTranscript to list of dictionaries for consistency
+                transcript_list = []
+                for item in fetched_transcript:
+                    transcript_list.append({
+                        'text': item.text,
+                        'start': item.start,
+                        'duration': item.duration
+                    })
+                return transcript_list
 
             raise ValueError("Transcript not found.")
 
@@ -53,8 +62,17 @@ class YouTubeTranscriber:
                     # Fetch transcripts with formatting preserved
                     transcript_data = transcript_info.fetch(
                         preserve_formatting=True)
-                    # Store transcript data directly in the language slot
-                    all_transcripts[lang_code] = transcript_data
+                    # Convert FetchedTranscript to list of dictionaries
+                    if transcript_data:
+                        transcript_list = []
+                        for item in transcript_data:
+                            # Convert FetchedTranscriptSnippet to dict
+                            transcript_list.append({
+                                'text': item.text,
+                                'start': item.start,
+                                'duration': item.duration
+                            })
+                        all_transcripts[lang_code] = transcript_list
                 except Exception as e:
                     print(f"Error fetching transcript for {lang_code}: {e}")
                     continue

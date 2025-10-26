@@ -1,28 +1,12 @@
 "use client";
 
-import {
-  IconDots,
-  IconFolder,
-  IconShare3,
-  IconTrash,
-  type Icon,
-} from "@tabler/icons-react";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import useSWR from "swr";
@@ -44,22 +28,35 @@ const fetcher = (url: string): Promise<ChatsResponse> =>
   fetch(url).then((res) => res.json());
 
 export function NavChatList() {
-  const { data } = useSWR<ChatsResponse>("/api/chats", fetcher, {
-    refreshInterval: 1000 * 60 * 1,
-  });
+  const { data, isLoading, error } = useSWR<ChatsResponse>(
+    "/api/chats",
+    fetcher,
+    {
+      refreshInterval: 1000 * 60 * 1,
+    }
+  );
+
+  // console.log("Chat data:", dat);
+
+  // Ensure data is an array before trying to map over it
+  const chatData = Array.isArray(data) ? data : [];
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Chat History</SidebarGroupLabel>
       <SidebarMenu>
-        {data?.map((item) => (
-          <SidebarMenuItem key={item.chat_id}>
-            <SidebarMenuButton asChild>
-              <Link href={"/chat/" + item.video_id + "/" + item.chat_id}>
-                <span>{item.chat_id}</span>
-              </Link>
-            </SidebarMenuButton>
-            {/* <DropdownMenu>
+        {isLoading && <div className="text-muted">Loading...</div>}
+        {error ? (
+          <div className="text-red-500">Error loading chats</div>
+        ) : chatData.length > 0 ? (
+          chatData.map((item) => (
+            <SidebarMenuItem key={item.chat_id}>
+              <SidebarMenuButton asChild>
+                <Link href={"/chat/" + item.video_id + "/" + item.chat_id}>
+                  <span>{item.chat_id}</span>
+                </Link>
+              </SidebarMenuButton>
+              {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction
                   showOnHover
@@ -89,8 +86,13 @@ export function NavChatList() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu> */}
-          </SidebarMenuItem>
-        ))}
+            </SidebarMenuItem>
+          ))
+        ) : (
+          !isLoading && (
+            <div className="text-muted-foreground text-sm">No chats yet</div>
+          )
+        )}
         {/* <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
             <IconDots className="text-sidebar-foreground/70" />

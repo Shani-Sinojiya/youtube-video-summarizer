@@ -24,16 +24,27 @@ export async function GET() {
       // body: JSON.stringify({ userid: session.user.id }),
     });
 
+    if (!res.ok) {
+      console.error("API request failed:", res.status, res.statusText);
+      return NextResponse.json([]);
+    }
+
     const data = await res.json();
 
-    // Check if the data object is empty
-    if (!data || Object.keys(data).length === 0) {
-      return NextResponse.json({ error: "No chats found" }, { status: 404 });
+    // Check if the data object is empty or has an error
+    if (data.error) {
+      console.log("API returned error:", data.error);
+      return NextResponse.json([]);
     }
 
     // console.log("Fetched chats:", data);
 
-    return NextResponse.json([...data.chat_histories]);
+    // Ensure chat_histories is an array before spreading
+    const chatHistories = Array.isArray(data.chat_histories)
+      ? data.chat_histories
+      : [];
+
+    return NextResponse.json(chatHistories);
   } catch (error) {
     console.error("Error fetching chats:", error);
     return NextResponse.json(

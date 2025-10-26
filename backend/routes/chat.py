@@ -71,6 +71,7 @@ async def get_chat_history(chat_id: str, current_user: User = Depends(get_curren
 
     history = await chat_service.get_history()
     if not history:
+        print(f"Chat history for {history} not found")
         raise HTTPException(status_code=404, detail="Chat history not found")
 
     return {"chat_id": chat_id, "history": history}
