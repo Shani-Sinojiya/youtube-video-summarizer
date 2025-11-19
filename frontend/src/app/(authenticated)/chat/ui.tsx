@@ -16,7 +16,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Plus, Send, X, Loader2 } from "lucide-react";
-import { VideoListContext } from "@/contexts/videolist";
+import { VideoInfo, VideoListContext } from "@/contexts/videolist";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -105,8 +105,8 @@ export default function ChatPage() {
               <CommandInput placeholder="Search video..." />
               <CommandEmpty>No video found.</CommandEmpty>
               <CommandGroup>
-                {videolist?.videos
-                  ?.filter((v) => v.status === "completed")
+                {(Array.isArray(videolist?.videos) ? videolist.videos : [])
+                  .filter((v) => v.status === "completed")
                   .map((video) => (
                     <CommandItem
                       key={video.youtube_id}

@@ -43,7 +43,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onChat }) => {
 
   return (
     <div className="px-4 lg:px-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 w-full">
-      {videos.map((video) => (
+      {(Array.isArray(videos) ? videos : []).map((video) => (
         <div
           key={video.youtube_id}
           className="group flex flex-col bg-white dark:bg-neutral-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-transform duration-300 hover:scale-[1.02] border border-neutral-200 dark:border-neutral-700"

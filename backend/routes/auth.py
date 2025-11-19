@@ -5,7 +5,7 @@ from models.user import User, UserProfile
 from typing import Optional
 from db.mongodb import get_db
 import os
-import jwt
+import jose.jwt as jwt
 from datetime import datetime, timedelta
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase

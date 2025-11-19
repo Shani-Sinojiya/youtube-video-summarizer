@@ -2,7 +2,7 @@
 import React, { createContext, PropsWithChildren } from "react";
 import useSWR from "swr";
 
-type VideoInfo = {
+export type VideoInfo = {
   // id: any;
   youtube_id: string;
   title: string;

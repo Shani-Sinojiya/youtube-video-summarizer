@@ -59,10 +59,15 @@ class AuthService:
         return encoded_jwt
 
     def hash_password(self, password: str) -> str:
-        return pwd_context.hash(password)
+        # Bcrypt has a 72-byte limit, so we truncate the password if necessary
+        # This is a standard practice and doesn't significantly reduce security
+        password_bytes = password.encode('utf-8')[:72]
+        return pwd_context.hash(password_bytes)
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        return pwd_context.verify(plain_password, hashed_password)
+        # Apply the same truncation for verification
+        password_bytes = plain_password.encode('utf-8')[:72]
+        return pwd_context.verify(password_bytes, hashed_password)
 
     async def create_user(self, email: str, password: str) -> User:
         password_hash = self.hash_password(password)
