@@ -16,50 +16,52 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
-          return new Error("Email and password are required");
+          // Missing credentials — return null to indicate authentication failure
+          return null;
         }
+
+        console.log("Attempting to log in user:", credentials.email);
+
+        const res = await fetch(`${process.env.API_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: credentials.email,
+            password: credentials.password,
+          }),
+        });
+
+        // Parse the response once
+        let payload: any = null;
         try {
-          console.log("Attempting to log in user:", credentials.email);
-
-          const res = await fetch(`${process.env.API_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
-
-          if (res.ok) {
-            const { data, access_token } = await res.json();
-
-            if (!data || !data.id) {
-              return new Error("Invalid credentials");
-            }
-
-            console.log(access_token);
-
-            return {
-              id: access_token,
-              name: "User",
-              email: data.email,
-              image: access_token,
-              token: access_token,
-            };
-          }
-          const errorData = await res.json();
-          console.error("Login error:", errorData);
-          if (errorData.error) {
-            return new Error(errorData.error);
-          }
-          return new Error("Failed to log in");
-        } catch (error) {
-          console.error("Error during login:", error);
-          if (error instanceof Error) {
-            return new Error(error.message);
-          }
+          payload = await res.json();
+        } catch {
+          payload = null;
         }
-        return null; // Return null if no user found
+
+        if (!res.ok) {
+          const detail = (payload && payload.detail) || "Invalid credentials";
+          console.error("Login error:", payload);
+          // Rethrow so AuthJS can pass the message to the client (signIn(..., { redirect: false }))
+          throw new Error(detail);
+        }
+
+        // res.ok === true
+        const { data, access_token } = payload || {};
+
+        if (!data || !data.id) {
+          // Invalid credentials or malformed response — return null
+          console.error("Login error: missing user data", payload);
+          return null;
+        }
+
+        return {
+          id: access_token,
+          name: "User",
+          email: data.email,
+          image: access_token,
+          token: access_token,
+        };
       },
     }),
   ],

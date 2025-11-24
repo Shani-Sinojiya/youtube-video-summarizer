@@ -14,6 +14,7 @@ import {
 import React, { ComponentProps, Fragment } from "react";
 import { FC, PropsWithChildren, useState, createContext } from "react";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 type VideoModel = {
   openVideoModel: () => void;
@@ -57,8 +58,33 @@ export default VideoModelProvider;
 
 function VideoModelForm({ className }: ComponentProps<"form">) {
   const [videolink, setVideolink] = useState<string>("");
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const regex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
+    const match = regex.exec(videolink);
+    if (match) {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos`, {
+          method: "POST",
+          body: JSON.stringify({ url: videolink }),
+        });
+        if (!res.ok) throw Error("Video Already Exist");
+        toast.info("Video Added Successfully");
+      } catch (error) {
+        toast.error("Video Already Exist");
+      }
+    } else {
+      toast.error("Invalid Youtube Link");
+    }
+  }
+
   return (
-    <form className={cn("grid items-start gap-6", className)}>
+    <form
+      className={cn("grid items-start gap-6", className)}
+      onSubmit={handleSubmit}
+    >
       <div className="grid gap-3">
         <Label htmlFor="link">Youtube Link</Label>
         <Input

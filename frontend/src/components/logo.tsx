@@ -9,20 +9,7 @@ const Logo = (props: SVGProps<SVGSVGElement>) => (
     {...props}
   >
     <circle cx="100" cy="100" r="90" fill="#4F46E5" />
-
     <polygon points="80,65 80,135 140,100" fill="white" />
-
-    {/* <text
-      x="50%"
-      y="180"
-      textAnchor="middle"
-      fontFamily="Arial, Helvetica, sans-serif"
-      fontSize="28"
-      fontWeight="bold"
-      fill="#111827"
-    >
-      Recapify
-    </text> */}
   </svg>
 );
 
