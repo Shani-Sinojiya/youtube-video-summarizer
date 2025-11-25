@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import React from "react";
 import ChatPage, { message } from "./ui";
 
@@ -27,19 +27,21 @@ const Page = async ({
     },
   });
 
-  const chat = await res.json();
+  if (res.status == 200) {
+    const chat = await res.json();
 
-  let chats: Array<message> = [];
+    let chats: Array<message> = [];
 
-  for (const c of chat.history) {
-    chats.push({
-      message: c.content as string,
-      name: "You",
-      sender: c.type == "ai" ? "bot" : "user",
-    });
-  }
+    for (const c of chat.history) {
+      chats.push({
+        message: c.content as string,
+        name: "You",
+        sender: c.type == "ai" ? "bot" : "user",
+      });
+    }
 
-  return <ChatPage chats={chats} chat_id={id} youtube_id={youtube_id} />;
+    return <ChatPage chats={chats} chat_id={id} youtube_id={youtube_id} />;
+  } else notFound();
 };
 
 export default Page;

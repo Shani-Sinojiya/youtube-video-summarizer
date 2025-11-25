@@ -26,7 +26,11 @@ export async function GET() {
 
     if (!res.ok) {
       console.error("API request failed:", res.status, res.statusText);
-      return NextResponse.json([]);
+      const errorData = await res.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errorData.detail || "Failed to fetch chats" },
+        { status: res.status }
+      );
     }
 
     const data = await res.json();

@@ -11,7 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-import React, { ComponentProps, Fragment } from "react";
+import React, { ComponentProps, Fragment, useContext } from "react";
 import { FC, PropsWithChildren, useState, createContext } from "react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -58,6 +58,7 @@ export default VideoModelProvider;
 
 function VideoModelForm({ className }: ComponentProps<"form">) {
   const [videolink, setVideolink] = useState<string>("");
+  const { closeVideoModel } = useContext(VideoModelContext);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -66,12 +67,16 @@ function VideoModelForm({ className }: ComponentProps<"form">) {
     const match = regex.exec(videolink);
     if (match) {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos`, {
-          method: "POST",
-          body: JSON.stringify({ url: videolink }),
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/videos`,
+          {
+            method: "POST",
+            body: JSON.stringify({ url: videolink }),
+          }
+        );
         if (!res.ok) throw Error("Video Already Exist");
         toast.info("Video Added Successfully");
+        closeVideoModel();
       } catch (error) {
         toast.error("Video Already Exist");
       }

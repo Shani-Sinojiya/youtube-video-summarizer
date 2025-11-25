@@ -72,7 +72,9 @@ async def upload_video(
     })
 
     # Trigger async processing
-    await add_task(video_id)
+    added = await add_task(video_id)
+    if not added:
+        print(f"Video {video_id} already in processing queue")
 
     return {"message": "Video upload initiated", "video_id": video_id}
 

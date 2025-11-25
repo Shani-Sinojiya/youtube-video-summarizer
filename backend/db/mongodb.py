@@ -53,6 +53,10 @@ class MongoDB:
 
             # Video indexes
             await cls.db.videos.create_index("youtube_id")
+            
+            # Retry queue indexes
+            await cls.db.videos.create_index([("status", 1), ("next_retry_at", 1)])
+            await cls.db.videos.create_index("retry_count")
 
             # User-Video relationship
             await cls.db.video_user_uploads.create_index(

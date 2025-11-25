@@ -6,15 +6,17 @@ Handles video information extraction, transcript fetching, and vector storage.
 from typing import Any, Optional, Dict, List
 from datetime import datetime
 from bson import ObjectId
-from langchain_chroma import Chroma
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
+from langchain_core.vectorstores import VectorStoreRetriever
+from langchain_chroma import Chroma 
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_core.documents import Document
 
 from models.video import Video
 from utils.youtube_info_extractor import YouTubeInfoExtractor
 from utils.youtube_transcribe import YouTubeTranscriber
-
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_core.documents import Document
+from services.retry_service import RetryService
 
 
 class VideoEmbeddingStore:
@@ -27,11 +29,9 @@ class VideoEmbeddingStore:
         )
 
         self.vs = Chroma(
-            collection_name="example_collection",
+            collection_name="video_collection",
             embedding_function=self.embedding_model,
             persist_directory="./chroma_langchain_db")
-
-    # ---------- Writer ----------
 
     def add_video_embeddings(
         self,
@@ -58,21 +58,78 @@ class VideoEmbeddingStore:
         for s in snippets:
             text = s.get("text")
             if text:
-                md = {**base_meta, "field": "snippet",
-                      "start": s.get("start"), "duration": s.get("duration")}
+                # Ensure start is stored as a float/int for sorting later
+                md = {
+                    **base_meta, 
+                    "field": "snippet",
+                    "start": float(s.get("start", 0)), 
+                    "duration": float(s.get("duration", 0))
+                }
                 docs.append(Document(page_content=text, metadata=md))
 
         self.vs.add_documents(docs)
         return f"✅ Stored {len(docs)} embeddings for video {youtube_id}"
 
-    # ---------- Reader ----------
-    def search_video(self, youtube_id: str, query: str, k: int = 5):
-        retriever = self.vs.as_retriever(
-            search_type="similarity",
-            search_kwargs={"k": k, "filter": {"youtube_id": youtube_id}}
+    # ---------- New Method to Get Transcript ----------
+    def get_transcript(self, youtube_id: str, full_text_only: bool = False) -> Any:
+        """
+        Retrieves the transcript snippets for a specific video using metadata filtering.
+        It sorts them by timestamp to reconstruct the flow.
+        """
+        # 1. Direct fetch using metadata filter (No embedding cost involved)
+        # We use $and to ensure we get specific video ID AND only transcript snippets (ignoring title/desc)
+        results = self.vs.get(
+            where={
+                "$and": [
+                    {"youtube_id": {"$eq": youtube_id}},
+                    {"field": {"$eq": "snippet"}}
+                ]
+            },
+            include=["metadatas", "documents"]
         )
-        return retriever.get_relevant_documents(query)
 
+        # 2. Reconstruct the data structure
+        transcript_segments = []
+        
+        # Zip documents (text) and metadatas together
+        if results['documents'] and results['metadatas']:
+            for text, meta in zip(results['documents'], results['metadatas']):
+                transcript_segments.append({
+                    "text": text,
+                    "start": meta.get("start", 0),
+                    "duration": meta.get("duration", 0)
+                })
+
+        # 3. Sort by 'start' time to ensure chronological order
+        # (Vector stores do not guarantee retrieval order)
+        transcript_segments.sort(key=lambda x: x["start"])
+
+        # 4. Return format
+        if full_text_only:
+            # Join all text with spaces
+            return " ".join([seg["text"] for seg in transcript_segments])
+        
+        return transcript_segments
+
+    def get_retriever(self, youtube_id: str, k: int = 10) -> VectorStoreRetriever:
+        """
+        Returns a retriever configured specifically for the given video ID.
+        """
+        return self.vs.as_retriever(
+            search_type="similarity",
+            search_kwargs={
+                "k": k, 
+                "filter": {"youtube_id": youtube_id}
+            }
+        )
+
+    def search_video(self, youtube_id: str, query: str, k: int = 5) -> List[Document]:
+        """
+        Performs a similarity search for a specific query.
+        """
+        retriever = self.get_retriever(youtube_id, k=k)
+        # Updated: get_relevant_documents is deprecated, use invoke()
+        return retriever.invoke(query)
 
 class VideoService:
     """Service for processing a YouTube video and storing embeddings."""
@@ -84,9 +141,8 @@ class VideoService:
         self.info_extractor = YouTubeInfoExtractor()
         self.transcriber: Optional[YouTubeTranscriber] = None
         self.embedding_store = VideoEmbeddingStore()
+        self.retry_service = RetryService(db)
 
-    async def initialize(self):
-        await self.update_video_status("processing")
 
     async def save_video_info(self, video_info: Video) -> None:
         await self.db_videos.insert_one(video_info.dict())
@@ -102,10 +158,23 @@ class VideoService:
         if error:
             update_data["processing_error"] = error
             update_data["processed_at"] = datetime.utcnow()
+        
         await self.db_videos.update_one(
             {"_id": ObjectId(self.video_id)},
             {"$set": update_data}
         )
+        
+        # Schedule retry if failed and eligible
+        if status == "failed":
+            if await self.retry_service.should_retry(self.video_id):
+                await self.retry_service.schedule_retry(self.video_id)
+                print(f"[RetryService] Scheduled retry for video {self.video_id}")
+            else:
+                print(f"[RetryService] Video {self.video_id} exceeded max retries")
+        elif status == "completed":
+            # Reset retry state on success
+            await self.retry_service.reset_retry_state(self.video_id)
+            print(f"[RetryService] Reset retry state for video {self.video_id}")
 
     async def fetch_video_info(self) -> Optional[Video]:
         video = await self.db_videos.find_one({"_id": ObjectId(self.video_id)})
@@ -153,7 +222,18 @@ class VideoService:
             await self.update_video_info(video)
 
             # -------- Store embeddings for all languages --------
-            for lang, data in transcripts.items():
+            total_langs = len(transcripts)
+            for idx, (lang, data) in enumerate(transcripts.items()):
+                # Update progress
+                progress_msg = f"Vectorizing language {lang} ({idx+1}/{total_langs})"
+                await self.db_videos.update_one(
+                    {"_id": ObjectId(self.video_id)},
+                    {"$set": {
+                        "processing_progress": progress_msg, 
+                        "updated_at": datetime.utcnow()
+                    }}
+                )
+                
                 snippets = []
                 if isinstance(data, dict) and "snippets" in data:
                     snippets = data["snippets"]  # type: ignore

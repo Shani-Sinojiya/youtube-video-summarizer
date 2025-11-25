@@ -6,6 +6,7 @@ import { useContext } from "react";
 import { Video, VideoGridProps } from "./types";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const UI = () => {
   const videolist = useContext(VideoListContext);
@@ -103,7 +104,13 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, onChat }) => {
             <Button
               onClick={() => onChat(video.youtube_id)}
               variant={"outline"}
-              className="mt-2"
+              className={cn(
+                "mt-2",
+                video.status !== "completed"
+                  ? "cursor-not-allowed"
+                  : "cursor-pointer"
+              )}
+              disabled={video.status !== "completed"}
             >
               💬 Chat with this video
             </Button>

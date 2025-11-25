@@ -26,6 +26,16 @@ class Video(BaseModel):
     view_count: Optional[int] = None  # YouTube view count
     uploader: Optional[str] = None  # YouTube channel name
     channel_url: Optional[str] = None  # YouTube channel URL
+    # Retry tracking fields
+    retry_count: int = 0  # Number of retry attempts
+    max_retries: int = 5  # Maximum allowed retries
+    last_retry_at: Optional[datetime] = None  # Timestamp of last retry attempt
+    next_retry_at: Optional[datetime] = None  # Scheduled time for next retry
+    # Distributed locking fields
+    processing_started_at: Optional[datetime] = None  # When processing started
+    processing_worker_id: Optional[str] = None  # Which worker is processing
+    lock_acquired_at: Optional[datetime] = None  # When lock was acquired
+    processing_progress: Optional[str] = None  # Detailed progress status (e.g. "Vectorizing...")
 
 
 class VideoUserUpload(BaseModel):

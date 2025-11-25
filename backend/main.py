@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from db.mongodb import MongoDB
 from routes import auth, video, chat
-from worker.main import worker
+from worker.main import start_worker_pool, stop_worker_pool, retry_worker, cleanup_stuck_tasks
 
 # Load environment variables
 load_dotenv()
@@ -30,11 +30,38 @@ async def lifespan(app: FastAPI):
     # Startup
     await MongoDB.connect()
 
-    asyncio.create_task(worker("W1", db=MongoDB.db))
+    # Verify Google API
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=os.getenv("GOOGLE_API_KEY"))
+        await llm.ainvoke("test")
+        print("[Startup] ✅ Google API connection verified")
+    except Exception as e:
+        print(f"[Startup] ❌ Google API connection failed: {e}")
+        # We don't raise here to allow app to start, but logs will show error
+
+    # Get number of workers from environment (default: 3)
+    num_workers = int(os.getenv("NUM_WORKERS", "3"))
+    
+    # Start worker pool
+    await start_worker_pool(db=MongoDB.db, num_workers=num_workers)
+    print(f"[Startup] Started worker pool with {num_workers} workers")
+    
+    # Start retry worker (runs every 10 minutes)
+    asyncio.create_task(retry_worker(db=MongoDB.db))
+    print("[Startup] Started retry worker")
+    
+    # Start cleanup worker for stuck tasks (runs every 5 minutes)
+    asyncio.create_task(cleanup_stuck_tasks(db=MongoDB.db))
+    print("[Startup] Started cleanup worker")
 
     yield
+    
     # Shutdown
+    print("[Shutdown] Stopping worker pool...")
+    await stop_worker_pool()
     await MongoDB.close()
+    print("[Shutdown] Complete")
 
 # Initialize FastAPI app
 app = FastAPI(

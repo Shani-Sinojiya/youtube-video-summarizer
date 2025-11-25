@@ -21,14 +21,27 @@ export async function GET() {
       },
     });
 
-    const data = await res.json();
-
-    // Check if the data object is empty
-    if (!data || Object.keys(data).length === 0) {
-      return NextResponse.json({ error: "No videos found" }, { status: 404 });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      console.error("Backend error fetching videos:", res.status, errorData);
+      return NextResponse.json(
+        { error: errorData.detail || "Failed to fetch videos" },
+        { status: res.status }
+      );
     }
 
-    // console.log("Fetched chats:", data);
+    const data = await res.json();
+
+    // Check if the data object is empty or not an array
+    if (!data || !Array.isArray(data)) {
+      // If it's an empty object or null, return empty array
+      if (data && Object.keys(data).length === 0) {
+        return NextResponse.json([]);
+      }
+      // If it's something else (unexpected), log it and return empty
+      console.warn("Unexpected data format from backend:", data);
+      return NextResponse.json([]);
+    }
 
     return NextResponse.json([...data].reverse());
   } catch (error) {
@@ -59,7 +72,13 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({ url }),
     });
 
-    if (!res.ok) throw Error("Video Already Exist");
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errorData.detail || "Failed to upload video" },
+        { status: res.status }
+      );
+    }
 
     return NextResponse.json({ message: "Uploading Successfully" });
   } catch (error) {

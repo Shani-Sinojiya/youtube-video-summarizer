@@ -32,22 +32,27 @@ async def chat(request: ChatRequest, current_user: User = Depends(get_current_us
         raise HTTPException(
             status_code=400, detail="Video processing not completed")
 
-    if not request.chat_id:
-        if request.is_new_chat:
-            # Optionally, clear previous chat history if needed
-            request.chat_id = str(uuid.uuid4())
-        elif not request.chat_id:
-            raise HTTPException(
-                status_code=400, detail="chat_id must be provided for existing chats")
-
+    if request.is_new_chat:
+        chat_id = str(uuid.uuid4())
+    elif request.chat_id:
+        chat_id = request.chat_id
+    else:
+        raise HTTPException(
+            status_code=400, 
+            detail="chat_id must be provided for existing chats or is_new_chat=True"
+        )
+        
     from services.chat_service import Chat_Service
     chat_service = Chat_Service(
-        video_id=request.video_id, db=db, chat_id=request.chat_id)
+        video_id=request.video_id, 
+        db=db, 
+        chat_id=request.chat_id)
 
     answer = await chat_service.answer_question(request.question)
 
     await db.chat_users.update_one(
-        {"chat_id": request.chat_id, "user_id": current_user.id,
+        {"chat_id": request.chat_id, 
+            "user_id": current_user.id,
             "video_id": request.video_id},
         {"$setOnInsert": {
             "chat_id": request.chat_id,
@@ -58,7 +63,7 @@ async def chat(request: ChatRequest, current_user: User = Depends(get_current_us
         upsert=True
     )
 
-    return {"answer": answer}
+    return {"answer": answer, "chat_id": chat_id}
 
 
 @router.get("/history/{chat_id}", response_model=dict)
@@ -69,7 +74,7 @@ async def get_chat_history(chat_id: str, current_user: User = Depends(get_curren
     from services.chat_service import ChatHistory
     chat_service = ChatHistory(chat_id=chat_id)
 
-    history = await chat_service.get_history()
+    history = chat_service.messages
     if not history:
         print(f"Chat history for {history} not found")
         raise HTTPException(status_code=404, detail="Chat history not found")

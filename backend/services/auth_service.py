@@ -21,7 +21,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-this")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(
-    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 hours
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "43200"))  # 30 days
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 
 # Configure CryptContext with explicit bcrypt settings
@@ -78,7 +78,7 @@ class AuthService:
             "last_login": datetime.utcnow(),  # Initialize last_login
             "active_chats": [],  # Initialize active_chats as empty list
             "preferred_language": "en",
-            "preferred_model": "gemini-pro",
+            "preferred_model": "gemini-flash-2.0",
             "account_type": "free",
             "is_verified": False,
             "total_videos": 0,
