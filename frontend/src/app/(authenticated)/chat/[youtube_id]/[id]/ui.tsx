@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 const urlRegex = /(https?:\/\/[^\s]+)/g;
 
 // Convert bare URLs → <https://...> for GFM linking
@@ -61,13 +62,50 @@ function ChatBubble({
           components={{
             a: (props) => (
               <Link
-                {...props as any}
+                {...(props as any)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium underline underline-offset-2 hover:text-primary"
               />
             ),
-            p: (props) => <p {...props} className="leading-relaxed" />,
+
+            p: (props) => <p {...props} className="my-2 leading-relaxed" />,
+
+            strong: (props) => <strong {...props} className="font-semibold" />,
+
+            ul: (props) => (
+              <ul {...props} className="list-disc ml-4 space-y-1" />
+            ),
+
+            ol: (props) => (
+              <ol {...props} className="list-decimal ml-4 space-y-1" />
+            ),
+
+            li: (props) => <li {...props} className="leading-relaxed" />,
+
+            h1: (props) => (
+              <h1 {...props} className="text-lg font-bold mt-3 mb-2" />
+            ),
+            h2: (props) => (
+              <h2 {...props} className="text-base font-semibold mt-3 mb-2" />
+            ),
+            h3: (props) => (
+              <h3 {...props} className="text-sm font-semibold mt-3 mb-2" />
+            ),
+
+            code: (props) => (
+              <code
+                {...props}
+                className="bg-muted px-1 py-0.5 rounded text-xs"
+              />
+            ),
+
+            pre: (props) => (
+              <pre
+                {...props}
+                className="bg-black text-white p-3 rounded-lg text-xs overflow-x-auto"
+              />
+            ),
           }}
         >
           {processedMarkdown}
@@ -107,9 +145,18 @@ export default function ChatPage({
 
   // auto scroll to bottom when messages update
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (!scrollRef.current) return;
+
+    const viewport = scrollRef.current.querySelector(
+      ".scroll-area-viewport"
+    ) as HTMLDivElement | null;
+
+    if (!viewport) return;
+
+    viewport.scrollTo({
+      top: viewport.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages]);
 
   const sendMessage = async () => {
@@ -161,8 +208,11 @@ export default function ChatPage({
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
       {/* Chat area */}
-      <ScrollArea className="flex-1 bg-muted/20 h-[calc(100vh-64px-64px)]">
-        <div ref={scrollRef} className="p-4 flex flex-col gap-4">
+      <ScrollArea
+        className="flex-1 bg-muted/20 h-[calc(100vh-64px-64px)]"
+        ref={scrollRef}
+      >
+        <div className="p-4 flex flex-col gap-4">
           {messages.map((msg, i) => (
             <ChatBubble
               key={i}

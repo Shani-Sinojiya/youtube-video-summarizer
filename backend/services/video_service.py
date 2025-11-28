@@ -40,7 +40,12 @@ class VideoEmbeddingStore:
         description: str,
         uploader: str,
         snippets: List[Dict[str, Any]],
-        language: str = "en"
+        language: str = "en",
+        duration_seconds: Optional[int] = None,
+        channel_url: Optional[str] = None,
+        view_count: Optional[int] = None,
+        upload_date: Optional[datetime] = None,
+        thumbnail_url: Optional[str] = None
     ):
         docs: List[Document] = []
         base_meta = {"youtube_id": youtube_id, "lang": language}
@@ -54,6 +59,22 @@ class VideoEmbeddingStore:
         if uploader:
             docs.append(Document(page_content=f"Uploaded by {uploader}", metadata={
                         **base_meta, "field": "uploader"}))
+            
+        if duration_seconds is not None:
+            docs.append(Document(page_content=f"Duration: {duration_seconds} seconds", metadata={
+                        **base_meta, "field": "duration_seconds"}))
+        if channel_url:
+            docs.append(Document(page_content=channel_url, metadata={
+                        **base_meta, "field": "channel_url"}))
+        if view_count is not None:
+            docs.append(Document(page_content=f"View count: {view_count}", metadata={
+                        **base_meta, "field": "view_count"}))
+        if upload_date:
+            docs.append(Document(page_content=upload_date.isoformat(), metadata={
+                        **base_meta, "field": "upload_date"}))
+        if thumbnail_url:
+            docs.append(Document(page_content=thumbnail_url, metadata={
+                        **base_meta, "field": "thumbnail_url"}))
 
         for s in snippets:
             text = s.get("text")
@@ -242,8 +263,12 @@ class VideoService:
                 self.embedding_store.add_video_embeddings(
                     youtube_id=video.youtube_id,
                     title=video.title,
+                    duration_seconds=video.duration_seconds,
                     description=video.description,
                     uploader=video.uploader,
+                    channel_url=video.channel_url,
+                    view_count=video.view_count,
+                    thumbnail_url=video.thumbnail_url,
                     snippets=snippets,
                     language=lang
                 )

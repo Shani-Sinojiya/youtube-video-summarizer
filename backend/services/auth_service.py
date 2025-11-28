@@ -10,6 +10,11 @@ from fastapi.security import OAuth2PasswordBearer
 from models.user import User
 from db.mongodb import get_db
 from dotenv import load_dotenv
+import hashlib
+import binascii
+import hashlib
+import binascii
+import hmac
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
@@ -59,15 +64,28 @@ class AuthService:
         return encoded_jwt
 
     def hash_password(self, password: str) -> str:
-        # Bcrypt has a 72-byte limit, so we truncate the password if necessary
-        # This is a standard practice and doesn't significantly reduce security
-        password_bytes = password.encode('utf-8')[:72]
-        return pwd_context.hash(password_bytes)
+        # Use PBKDF2-HMAC-SHA256 with a random salt and iterations.
+        # Stored format: pbkdf2_sha256$<iterations>$<salt_hex>$<dk_hex>
+
+        iterations = 100_000
+        salt = os.urandom(16)
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+        return f"pbkdf2_sha256${iterations}${binascii.hexlify(salt).decode()}${binascii.hexlify(dk).decode()}"
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        # Apply the same truncation for verification
-        password_bytes = plain_password.encode('utf-8')[:72]
-        return pwd_context.verify(password_bytes, hashed_password)
+        # Verify PBKDF2-HMAC-SHA256 hashed password
+
+        try:
+            algorithm, iterations_str, salt_hex, dk_hex = hashed_password.split("$")
+            if algorithm != "pbkdf2_sha256":
+                return False
+            iterations = int(iterations_str)
+            salt = binascii.unhexlify(salt_hex)
+            dk = binascii.unhexlify(dk_hex)
+            test_dk = hashlib.pbkdf2_hmac("sha256", plain_password.encode("utf-8"), salt, iterations)
+            return hmac.compare_digest(test_dk, dk)
+        except Exception:
+            return False
 
     async def create_user(self, email: str, password: str) -> User:
         password_hash = self.hash_password(password)

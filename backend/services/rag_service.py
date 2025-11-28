@@ -1,131 +1,166 @@
-# """
-# VideoRAGService for YouTube Summarizer.
-# Modern implementation using create_history_aware_retriever + create_retrieval_chain.
-# """
+from typing import Dict, Any, List
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.prompts import PromptTemplate
 
-# from langchain_google_genai import ChatGoogleGenerativeAI
-# from langchain.chains import create_history_aware_retriever, create_retrieval_chain
-# from langchain.chains.combine_documents import create_stuff_documents_chain
-# from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-# from langchain_core.runnables import Runnable
-# from langchain_core.vectorstores import VectorStoreRetriever
-# from langchain_core.messages import BaseMessage
+from services.video_service import VideoEmbeddingStore
 
-# class RAGService:
-#     def __init__(self, temperature: float = 0.7, model_name: str = "gemini-2.5-flash"):
-#         """
-#         Initialize the RAG Service with Google Gemini.
-        
-#         Args:
-#             temperature: Creativity of the model (0.0 to 1.0).
-#             model_name: "gemini-1.5-flash" is recommended for speed/cost. 
-#                         Use "gemini-1.5-pro" for complex reasoning.
-#         """
-#         self.llm = ChatGoogleGenerativeAI(
-#             model=model_name,
-#             temperature=temperature,
-#             max_tokens=None,
-#             timeout=None,
-#             max_retries=2,
-#         )
 
-#         # --- Prompt 1: Contextualize Question ---
-#         # This prompt takes the chat history and the new question, and rephrases the 
-#         # question to be standalone so the vector search understands it.
-#         self.contextualize_q_system_prompt = (
-#             "Given a chat history and the latest user question "
-#             "which might reference context in the chat history, "
-#             "formulate a standalone question which can be understood "
-#             "without the chat history. Do NOT answer the question, "
-#             "just reformulate it if needed and otherwise return it as is."
-#         )
+class VideoRAGService:
+    """
+    High-quality RAG system for YouTube videos.
+    Supports:
+    - Accurate Q&A
+    - Detailed fallback summarizer (full transcript)
+    - Metadata-aware answers
+    - Multilingual response
+    """
 
-#         self.contextualize_q_prompt = ChatPromptTemplate.from_messages([
-#             ("system", self.contextualize_q_system_prompt),
-#             MessagesPlaceholder("chat_history"),
-#             ("human", "{input}"),
-#         ])
-        
-#         # --- Prompt 2: Answer Question ---
-#         # This prompt takes the chat history and the new question, and rephrases the 
-#         # question to be standalone so the vector search understands it.
-#         self.qa_system_prompt = (
-#             "You are a helpful AI assistant for a YouTube video analysis tool. "
-#             "Use the following pieces of retrieved context to answer "
-#             "the question. \n\n"
-#             "Rules:\n"
-#             "1. Answer strictly based on the provided context.\n"
-#             "2. If the answer is not in the context, say 'I cannot find that information in this video.'\n"
-#             "3. Keep the answer concise and friendly.\n\n"
-#             "Context:\n{context}"
-#         )
+    SUMMARY_KEYWORDS = [
+        "summarize", "summary", "what inside",
+        "explain the video", "explain video",
+        "in detail", "detailed", "overview",
+        "describe", "what happens", "what is inside"
+    ]
 
-#         self.qa_prompt = ChatPromptTemplate.from_messages([
-#             ("system", self.qa_system_prompt),
-#             MessagesPlaceholder("chat_history"),
-#             ("human", "{input}"),
-#         ])
+    def __init__(
+        self,
+        model_name: str = "gemini-2.0-flash",
+        temperature: float = 0.2,
+        k: int = 8,
+    ):
+        self.llm = ChatGoogleGenerativeAI(
+            model=model_name,
+            temperature=temperature,
+            max_retries=2,
+        )
 
-#     def get_rag_chain(self, retriever: VectorStoreRetriever) -> Runnable:
-#         """
-#         Constructs the LCEL RAG chain dynamically based on the provided retriever.
-#         """
-        
-#         # 1. History Aware Retriever Chain
-#         # (Input + History) -> Rewritten Question -> Vector Store -> Documents
-#         history_aware_retriever = create_history_aware_retriever(
-#             self.llm,
-#             retriever,
-#             self.contextualize_q_prompt
-#         )
+        self.store = VideoEmbeddingStore()
+        self.vs = self.store.vs
+        self.k = k
 
-#         # 2. Document Processing Chain
-#         # (Documents + Question) -> LLM -> Answer
-#         question_answer_chain = create_stuff_documents_chain(
-#             self.llm,
-#             self.qa_prompt
-#         )
+        self.prompt = PromptTemplate.from_template("""
+You are a highly accurate assistant answering questions about a YouTube video.
 
-#         # 3. Final RAG Chain
-#         # Connects the two previous chains
-#         rag_chain = create_retrieval_chain(
-#             history_aware_retriever, 
-#             question_answer_chain
-#         )
+Context may include:
+- Transcript snippets
+- Title & description
+- Channel name
+- Video duration
+- Upload date
+- Views
+- Any metadata
 
-#         return rag_chain
+RULES:
+1. Answer ONLY using context.
+2. If transcript does NOT contain the answer, check metadata.
+3. If still missing, reply: "I could not find this information in the video."
+4. Respond in the user's language.
+5. Keep answers clear and human-friendly.
 
-#     def build_chain(self, retriever, chat_history):
-#         """Build a modern conversational RAG chain."""
-#         # History-aware retriever
-#         history_aware_retriever = create_history_aware_retriever(
-#             self.llm,
-#             retriever,
-#             self.contextualize_q_prompt,
-#         )
+User question:
+{input}
 
-#         # QA chain
-#         qa_chain = create_stuff_documents_chain(
-#             self.llm,
-#             self.qa_prompt,
-#         )
+Context:
+{context}
 
-#         # Final retrieval chain
-#         rag_chain = create_retrieval_chain(history_aware_retriever, qa_chain)
+Answer:
+""")
 
-#         return rag_chain
+    # -------------------------------------------------------------
+    # Detect if user wants a full summary instead of vector search
+    # -------------------------------------------------------------
+    def is_summary_question(self, q: str) -> bool:
+        q = q.lower()
+        return any(key in q for key in self.SUMMARY_KEYWORDS)
 
-#     def chat(self, question: str, vectorstore, chat_history):
-#         """Run a chat query against the modern RAG chain."""
-#         chain = self.build_chain(vectorstore, chat_history)
+    # -------------------------------------------------------------
+    # Fallback full transcript summarizer
+    # -------------------------------------------------------------
+    def summarize_full_transcript(self, youtube_id: str, question: str) -> str:
+        transcript = self.store.get_transcript(youtube_id, full_text_only=True)
 
-#         # Get messages from history object
-#         messages = chat_history.messages if hasattr(chat_history, 'messages') else []
+        if not transcript or len(transcript.strip()) < 10:
+            return "I could not find transcript content for this video."
 
-#         # Invoke chain with both question and chat history
-#         result = chain.invoke({
-#             "input": question,
-#             "chat_history": messages
-#         })
+        prompt = f"""
+You are a deep video summarizer.
 
-#         return result
+User request:
+{question}
+
+Task:
+Provide an extremely detailed explanation of the ENTIRE video content.
+Include:
+- What the speaker explains
+- Key points
+- Step-by-step concepts
+- Examples
+- Purpose of the video
+- Intended audience
+- Tone & style
+
+Transcript:
+{transcript}
+
+Detailed summary:
+"""
+
+        resp = self.llm.invoke(prompt)
+        return getattr(resp, "content", str(resp))
+
+    # -------------------------------------------------------------
+    # Build retriever for normal Q&A
+    # -------------------------------------------------------------
+    def get_retriever(self, youtube_id: str):
+        return self.vs.as_retriever(
+            search_type="similarity",
+            search_kwargs={
+                "k": self.k,
+                "filter": {"youtube_id": {"$eq": youtube_id}},
+            }
+        )
+
+    # -------------------------------------------------------------
+    # MAIN PUBLIC METHOD
+    # -------------------------------------------------------------
+    def answer(self, youtube_id: str, question: str) -> Dict[str, Any]:
+
+        # STEP 1 — If it's a summary question → bypass RAG, use full transcript
+        if self.is_summary_question(question):
+            answer = self.summarize_full_transcript(youtube_id, question)
+            return {"answer": answer, "docs": []}
+
+        # STEP 2 — Normal RAG flow
+        retriever = self.get_retriever(youtube_id)
+
+        combine_chain = create_stuff_documents_chain(
+            llm=self.llm,
+            prompt=self.prompt,
+        )
+
+        rag_chain = create_retrieval_chain(retriever, combine_chain)
+
+        try:
+            result = rag_chain.invoke({"input": question})
+        except Exception as e:
+            return {"answer": f"RAG Error: {str(e)}", "docs": []}
+
+        raw_answer = result.get("answer") or result.get("output") or ""
+
+        # STEP 3 — If RAG failed to find context → fallback to transcript summary
+        if "not mentioned" in raw_answer.lower() or raw_answer.strip() == "":
+            fallback = self.summarize_full_transcript(youtube_id, question)
+            return {"answer": fallback, "docs": []}
+
+        return {
+            "answer": raw_answer,
+            "docs": result.get("context", []),
+        }
+
+    # -------------------------------------------------------------
+    # Optional helper: Full transcript text
+    # -------------------------------------------------------------
+    def full_transcript(self, youtube_id: str) -> str:
+        return self.store.get_transcript(youtube_id, full_text_only=True) or ""

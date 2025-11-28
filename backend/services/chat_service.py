@@ -6,6 +6,7 @@ from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
 from langchain_core.messages import BaseMessage
 from services.video_service import VideoEmbeddingStore
 from services.video_agent_service import VideoAgentService
+from services.rag_service import VideoRAGService
 
 # --- 1. Chat History Class (Standalone) ---
 class ChatHistory:
@@ -92,31 +93,47 @@ class Chat_Service:  # <--- CHANGED: Removed (ChatHistory) inheritance
             
             # Basic validity check
             has_content = len(str(msg.content).strip()) > 0
-            has_tools = hasattr(msg, 'tool_calls') and len(msg.tool_calls) > 0
+            has_tools = hasattr(msg, 'tool_calls') and len(msg.tool_calls) > 0 # pyright: ignore[reportAttributeAccessIssue]
             
             if has_content or has_tools:
                 clean_history.append(msg)
 
         # Run Agent
+        # try:
+        #     result = self.agent_service.chat(
+        #         question=question,
+        #         youtube_id=self.video_id, 
+        #         chat_history=clean_history
+        #     )
+        #     answer_text = result["answer"]
+        # except ValueError:
+        #     # Retry fresh
+        #     result = self.agent_service.chat(
+        #         question=question,
+        #         youtube_id=self.video_id,
+        #         chat_history=[] 
+        #     )
+        #     answer_text = result["answer"]
+        # except Exception as e:
+        #     print(f"Error: {e}")
+        #     answer_text = "Error processing request."
+
+
         try:
-            result = self.agent_service.chat(
-                question=question,
-                youtube_id=self.video_id, 
-                chat_history=clean_history
-            )
-            answer_text = result["answer"]
-        except ValueError:
-            # Retry fresh
-            result = self.agent_service.chat(
-                question=question,
+            result = VideoRAGService(temperature=0.7).answer(
                 youtube_id=self.video_id,
-                chat_history=[] 
+                question=question,
+                
             )
-            answer_text = result["answer"]
+            if isinstance(result, dict):
+                answer_text = result.get("answer", "Error processing request.")
+            else:
+                answer_text = str(result)
         except Exception as e:
             print(f"Error: {e}")
+            traceback.print_exc()
             answer_text = "Error processing request."
-
+            
         # Save
         if answer_text:
             await self.history_manager.add_user_message(question)
