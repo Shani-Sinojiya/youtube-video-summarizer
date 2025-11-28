@@ -7,7 +7,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import Link from "next/link";
+const urlRegex = /(https?:\/\/[^\s]+)/g;
 
+// Convert bare URLs → <https://...> for GFM linking
+function linkify(text: string) {
+  return text.replace(urlRegex, (url) => {
+    if (url.startsWith("<") && url.endsWith(">")) return url;
+    return `<${url}>`;
+  });
+}
 type ChatBubbleProps = {
   message: string;
   sender?: "user" | "bot";
@@ -22,7 +33,7 @@ function ChatBubble({
   name,
 }: ChatBubbleProps) {
   const isUser = sender === "user";
-
+  const processedMarkdown = linkify(message);
   return (
     <div
       className={cn(
@@ -39,13 +50,28 @@ function ChatBubble({
 
       <div
         className={cn(
-          "max-w-xs rounded-2xl px-4 py-2 text-sm shadow",
+          "max-w-xl rounded-2xl px-4 py-2 text-sm shadow",
           isUser
             ? "bg-primary text-primary-foreground rounded-br-none"
             : "bg-muted text-muted-foreground rounded-bl-none"
         )}
       >
-        {message}
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: (props) => (
+              <Link
+                {...props as any}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium underline underline-offset-2 hover:text-primary"
+              />
+            ),
+            p: (props) => <p {...props} className="leading-relaxed" />,
+          }}
+        >
+          {processedMarkdown}
+        </ReactMarkdown>
       </div>
 
       {isUser && (
